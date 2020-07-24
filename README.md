@@ -1,3 +1,3 @@
 # TensorFlowNetworks
 
-This repository contains example of NLP networks written in Tensorflow v2. 
+This repository contains examples of NLP networks written in Tensorflow v2. 
