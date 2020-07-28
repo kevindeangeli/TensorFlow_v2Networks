@@ -3,12 +3,14 @@ Created by: Kevin De Angeli
 Email: Kevindeangeli@utk.edu
 Date: 7/20/20
 
-TextCNN using the TF (trainable) Embedding Layer
+TextCNN using the TF Embedding Layer
+Patience parameter implemented for validation accuracy.
 '''
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+from tensorflow.keras.callbacks import EarlyStopping
 
 
 
@@ -53,11 +55,15 @@ class TextCNNv2(keras.Model):
         logits = self.dense(x)
         return logits
 
+    def predictLabel(self,inputs):
+        preds = self.predict(inputs)
+        return np.argmax(inputs, axis=1)
+
 if __name__ == "__main__":
     # params
     batch_size = 64
     lr = 0.0001
-    epochs = 1
+    epochs = 1 #Patience used
     train_samples = 1000
     test_samples = 1000
     val_examples = 50
@@ -88,11 +94,27 @@ if __name__ == "__main__":
     model = TextCNNv2(vocab_size=vocab_size,embedding_size=embedding_size,num_classes=num_classes)
     optimizer = tf.keras.optimizers.Adam(lr, 0.9, 0.99)
     model.compile(optimizer, loss="categorical_crossentropy", metrics=["accuracy"])
-    model.fit(X_train, y_train, epochs=1, batch_size=64, validation_data=(X_val, y_val))
+    earlyStopping = EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=5)
+    model.fit(X_train, y_train, epochs=epochs, batch_size=64, validation_data=(X_val, y_val),callbacks=[earlyStopping])
     print(" ")
     model.evaluate(X_test, y_test, verbose=1)
     model.summary()
 
+    print("Class Prediction for Dcoument 1: ")
+    print(model.predictLabel(X_test[0:1]))
+
+    ######### Save/Load Models ##########
+    # #Save the model:
+    # path = "my_mtCNN"
+    # model.save(path)
+
+    # #Load the model:
+    # path = "my_mtCNN"
+    # load_model = keras.models.load_model(path)
+    # load_model.evaluate(X_test, y_test, verbose=1)
+    #
+    # load_model.fit(X_train, y_train, epochs=epochs, batch_size=64, validation_data=(X_val, y_val),
+    #           callbacks=[earlyStopping])
 
 
 

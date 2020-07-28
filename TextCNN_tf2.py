@@ -11,6 +11,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+from tensorflow.keras.callbacks import EarlyStopping
 
 class Convolutions(layers.Layer):
     #For the feature, make number of convolution layers a variable, where you can seelct num filters, strides for each.
@@ -44,7 +45,7 @@ class TextCNNv2(keras.Model):
         self.embeddings = embedding_matrix
 
     def call(self, inputs):
-        word_embeds = tf.gather(self.embeddings, inputs)
+        word_embeds = tf.gather(self.embeddings, inputs) #non-trainable
         x = self.convolve(word_embeds)
         x = tf.nn.dropout(x, self.dropout_keep)
         logits = self.dense(x)
@@ -61,7 +62,7 @@ if __name__ == "__main__":
     # params
     batch_size = 64
     lr = 0.0001
-    epochs = 1
+    epochs = 15
     train_samples = 1000
     test_samples = 1000
     vocab_size = 750
@@ -92,11 +93,26 @@ if __name__ == "__main__":
     model = TextCNNv2(vocab,num_classes)
     optimizer = tf.keras.optimizers.Adam(lr, 0.9, 0.99)
     model.compile(optimizer, loss="categorical_crossentropy", metrics=["accuracy"])
+    earlyStopping = EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=3)
 
-    model.fit(X_train, y_train, epochs=2, batch_size=64, validation_data=(X_test, y_test))
+    model.fit(X_train, y_train, epochs=2, batch_size=64, validation_data=(X_test, y_test),callbacks=[earlyStopping])
     print("Evalaute: ----")
     model.evaluate(X_test, y_test, verbose=1)
     model.summary()
+
+    ######### Save/Load Models ##########
+    # #Save the model:
+    # path = "my_mtCNN"
+    # model.save(path)
+
+    # #Load the model:
+    # path = "my_mtCNN"
+    # load_model = keras.models.load_model(path)
+    # load_model.evaluate(X_test, [y_test, y_test2], verbose=1)
+    #
+    # load_model.fit(X_train, [y_train,y_train2], epochs=epochs, batch_size=64, validation_data=(X_val, [y_val,y_val2]),
+    #           callbacks=[earlyStopping])
+
 
 
 

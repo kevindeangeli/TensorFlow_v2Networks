@@ -9,11 +9,17 @@ The Y's for each task are passed a list ([Y_task1, Y_task2 ...]). (This applies 
 
 When  defining the model, the dense layers are created based on the number of labels in each task.
 paramter num_classes is a list: [num_class_task1, num_class_task1, ...]
+
 '''
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import ModelCheckpoint
+
+
+
 
 
 class Convolutions(layers.Layer):
@@ -61,14 +67,19 @@ class TextCNNv2(keras.Model):
             logits.append(denseLayer(x))
         return logits
 
+    def predictLabel(self, inputs):
+        logits = self.predict(inputs)
+        Y_p = [np.argmax(i) for i in logits]
+        return Y_p
+
 
 if __name__ == "__main__":
     # params
     batch_size = 64
     lr = 0.0001
-    epochs = 1
-    train_samples = 100
-    test_samples = 100
+    epochs = 2 #Patience is implemented. Change this to a big number for early stopping.
+    train_samples = 1000
+    test_samples = 1000
     val_examples = 50
     vocab_size = 750
     max_words = 500
@@ -105,13 +116,34 @@ if __name__ == "__main__":
     model = TextCNNv2(vocab_size=vocab_size,embedding_size=embedding_size,num_classes=num_classes)
     optimizer = tf.keras.optimizers.Adam()
     model.compile(optimizer, loss="categorical_crossentropy", metrics=["accuracy"])
-    model.fit(X_train, [y_train,y_train2], epochs=1, batch_size=64, validation_data=(X_val, [y_val,y_val2]))
+    earlyStopping = EarlyStopping(monitor='loss', mode='min', verbose=1, patience=3)
+    filepath = "checkPointsTest"
+    #mc = ModelCheckpoint(filepath, monitor='val_loss', verbose=0, save_best_only=False,
+    #                     save_weights_only=False, mode='auto',period=1) #Checkpoint after each iteration.
+    model.fit(X_train, [y_train,y_train2], epochs=epochs, batch_size=64, validation_data=(X_val, [y_val,y_val2]),
+              callbacks=[earlyStopping])
     print("Evalaute: ----")
     model.evaluate(X_test, [y_test,y_test2], verbose=1)
     model.summary()
 
     #See predictions for Document 1:
-    Y_p = model.predict(X_test[0:1])
-    Y_p = [np.argmax(i) for i in Y_p]
-    print(Y_p)
+    print("Prediction for document 1: ")
+    print(model.predictLabel(X_test[0:1]))
+
+    ######### Save/Load Models ##########
+
+    # #Save the model:
+    # path = "my_mtCNN"
+    # model.save(path)
+
+    # #Load the model:
+    # path = "my_mtCNN"
+    # load_model = keras.models.load_model(path)
+    # load_model.evaluate(X_test, [y_test, y_test2], verbose=1)
+    #
+    # load_model.fit(X_train, [y_train,y_train2], epochs=epochs, batch_size=64, validation_data=(X_val, [y_val,y_val2]),
+    #           callbacks=[earlyStopping])
+
+
+
 
