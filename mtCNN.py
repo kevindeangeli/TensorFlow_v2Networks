@@ -116,7 +116,7 @@ if __name__ == "__main__":
     model = TextCNNv2(vocab_size=vocab_size,embedding_size=embedding_size,num_classes=num_classes)
     optimizer = tf.keras.optimizers.Adam()
     model.compile(optimizer, loss="categorical_crossentropy", metrics=["accuracy"])
-    earlyStopping = EarlyStopping(monitor='loss', mode='min', verbose=1, patience=3)
+    earlyStopping = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=3)
     filepath = "checkPointsTest"
     #mc = ModelCheckpoint(filepath, monitor='val_loss', verbose=0, save_best_only=False,
     #                     save_weights_only=False, mode='auto',period=1) #Checkpoint after each iteration.
