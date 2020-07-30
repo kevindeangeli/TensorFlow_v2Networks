@@ -50,7 +50,7 @@ class TextCNNv2(keras.Model):
         super(TextCNNv2, self).__init__(name=name)
         self.dropout_keep = dropout_keep
         self.num_classes = num_classes
-        self.embL = layers.Embedding(vocab_size, embedding_size)
+        self.embL = layers.Embedding(vocab_size, embedding_size, embeddings_initializer='GlorotNormal')
         self.embSize = embedding_size
         self.convolve = Convolutions(num_filters)
         self.classifyLayers = []
