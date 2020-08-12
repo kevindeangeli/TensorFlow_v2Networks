@@ -1,11 +1,10 @@
 '''
 Created by: Kevin De Angeli
 Email: Kevindeangeli@utk.edu
-Date: 7/20/20
-
-TextCNN using the TF Embedding Layer
-Patience parameter implemented for validation accuracy.
+Date: 8/11/20
+#IMDB Dataset for binary classification (positive/negative reviews)
 '''
+from tensorflow.keras.datasets import imdb
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
@@ -60,66 +59,84 @@ class TextCNNv2(keras.Model):
         return np.argmax(preds, axis=1)
 
 if __name__ == "__main__":
+    (X_train, y_train), (X_test, y_test) = imdb.load_data(path="imdb_full.pkl",
+                                                          nb_words=None,
+                                                          skip_top=0,
+                                                          maxlen=None,
+                                                          seed=113,
+                                                          start_char=1,
+                                                          oov_char=2,
+                                                          index_from=3)
+
+    X_val = X_test[0:10000]
+    X_test = X_test[10000:]
+    y_val = y_test[0:10000]
+    y_test = y_test[10000:]
+
+    X = np.concatenate((X_test, X_train, X_val))
+
+    # maxes = [np.max(i) for i in X]
+    # maxes = np.array(maxes)
+    # print(len(maxes))
+    # print(np.max(maxes))  #<-- vocab size = 88586+1
+
+    vocab_size =  88586+1
+    doc_lenghts = [len(i) for i in X]
+    mean_words = np.mean(doc_lenghts)
+    max_words = int(mean_words)  # Use the mean number of words as the max (234)
+
+    new_x = []
+    for i in X_train:
+        len_i = len(i)
+        if len_i > max_words:
+            new_x.append(i[0:max_words])
+        else:
+            new_x.append(np.pad(i, (0, max_words - len_i), constant_values=(0, 0)))
+    X_train = np.array(new_x)
+
+    new_x = []
+    for i in X_test:
+        len_i = len(i)
+        if len_i > max_words:
+            new_x.append(i[0:max_words])
+        else:
+            new_x.append(np.pad(i, (0, max_words - len_i), constant_values=(0, 0)))
+    X_test = np.array(new_x)
+
+    new_x = []
+    for i in X_val:
+        len_i = len(i)
+        if len_i > max_words:
+            new_x.append(i[0:max_words])
+        else:
+            new_x.append(np.pad(i, (0, max_words - len_i), constant_values=(0, 0)))
+    X_val = np.array(new_x)
+
+    y_train = keras.utils.to_categorical(y_train, 2)
+    y_test = keras.utils.to_categorical(y_test, 2)
+    y_val = keras.utils.to_categorical(y_val, 2)
+
     # params
-    batch_size = 64
+    batch_size = 128
     lr = 0.0001
-    epochs = 1 #Patience used
-    train_samples = 1000
-    test_samples = 1000
-    val_examples = 50
-    vocab_size = 750
-    max_words = 500
-    num_classes = 10
+    epochs = 99999 #Patience used
+    num_classes = 2
     embedding_size = 100
     num_filters = 100
 
-    #Create Random/Toy Data
-    X = np.random.randint(1, vocab_size,
-                          (train_samples + test_samples, max_words))
-
-    # test train split
-    X_train = X[:train_samples]
-    X_test = X[train_samples:val_examples]
-    X_val = X[val_examples:]
-
-
-    y_train = np.random.randint(0, num_classes, train_samples)
-    y_test = np.random.randint(0, num_classes, test_samples)
-    y_val = np.random.randint(0, num_classes, val_examples)
-
-    y_train = keras.utils.to_categorical(y_train, num_classes)
-    y_test = keras.utils.to_categorical(y_test, num_classes)
-    y_val = keras.utils.to_categorical(y_val, num_classes)
 
     #Define and Compile Model
     model = TextCNNv2(vocab_size=vocab_size,embedding_size=embedding_size,num_classes=num_classes)
     optimizer = tf.keras.optimizers.Adam(lr, 0.9, 0.99)
     model.compile(optimizer, loss="categorical_crossentropy", metrics=["accuracy"])
     earlyStopping = EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=5)
-    model.fit(X_train, y_train, epochs=epochs, batch_size=64, validation_data=(X_val, y_val),callbacks=[earlyStopping])
+    model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_data=(X_val, y_val),callbacks=[earlyStopping])
     print(" ")
     model.evaluate(X_test, y_test, verbose=1)
     model.summary()
 
     print("Class Prediction for Dcoument 1: ")
     print(model.predictLabel(X_test[0:1]))
-
-    ######### Save/Load Models ##########
-    # #Save the model:
-    # path = "my_mtCNN"
-    # model.save(path)
-
-    # #Load the model:
-    # path = "my_mtCNN"
-    # load_model = keras.models.load_model(path)
-    # load_model.evaluate(X_test, y_test, verbose=1)
-    #
-    # load_model.fit(X_train, y_train, epochs=epochs, batch_size=64, validation_data=(X_val, y_val),
-    #           callbacks=[earlyStopping])
-
-
-
-
 
 
 
