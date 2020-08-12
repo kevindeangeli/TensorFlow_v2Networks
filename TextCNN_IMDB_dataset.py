@@ -3,6 +3,9 @@ Created by: Kevin De Angeli
 Email: Kevindeangeli@utk.edu
 Date: 8/11/20
 #IMDB Dataset for binary classification (positive/negative reviews)
+
+After 17 Epochs, it gave an accuracy of 85.11 % on the Test data.
+
 '''
 from tensorflow.keras.datasets import imdb
 import numpy as np
