@@ -2,9 +2,12 @@
 Created by: Kevin De Angeli
 Email: Kevindeangeli@utk.edu
 Date: 7/20/20
-
 TextCNN using the TF Embedding Layer
 Patience parameter implemented for validation accuracy.
+
+TF Version: 2.3.0
+
+
 '''
 import numpy as np
 import tensorflow as tf
@@ -79,14 +82,13 @@ if __name__ == "__main__":
 
     # test train split
     X_train = X[:train_samples]
-    X_test = X[train_samples:val_examples]
-    X_val = X[val_examples:]
+    X_test = X[train_samples:]
+    X_val = X[:val_examples]
 
-
+    num_classes = 10 #Task 1 has these number of classes
     y_train = np.random.randint(0, num_classes, train_samples)
     y_test = np.random.randint(0, num_classes, test_samples)
     y_val = np.random.randint(0, num_classes, val_examples)
-
     y_train = keras.utils.to_categorical(y_train, num_classes)
     y_test = keras.utils.to_categorical(y_test, num_classes)
     y_val = keras.utils.to_categorical(y_val, num_classes)
@@ -116,10 +118,3 @@ if __name__ == "__main__":
     #
     # load_model.fit(X_train, y_train, epochs=epochs, batch_size=64, validation_data=(X_val, y_val),
     #           callbacks=[earlyStopping])
-
-
-
-
-
-
-

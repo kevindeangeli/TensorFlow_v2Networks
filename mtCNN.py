@@ -3,6 +3,8 @@ Created by: Kevin De Angeli
 Email: Kevindeangeli@utk.edu
 Date: 7/20/20
 
+TF Version: 2.3.0
+
 Multitask CNN:
 Given Text Documents, this architecture can handle multiple classification task at once.
 The Y's for each task are passed a list ([Y_task1, Y_task2 ...]). (This applies to Train, Test, Val)
@@ -110,6 +112,11 @@ if __name__ == "__main__":
     y_train2 = keras.utils.to_categorical(y_train2, num_classes2)
     y_test2 = keras.utils.to_categorical(y_test2, num_classes2)
     y_val2 = keras.utils.to_categorical(y_val2, num_classes2)
+    '''
+    Note:
+    Using: model.compile(optimizer, loss=tf.keras.losses.SparseCategoricalCrossentropy(), metrics=["accuracy"])
+    Should not require y's to be hot-encoded. I haven't not tested it. 
+    '''
 
 
     num_classes = [num_classes,num_classes2] #Pass the number of classes per each task

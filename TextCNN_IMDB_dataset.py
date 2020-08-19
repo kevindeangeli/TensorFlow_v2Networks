@@ -6,6 +6,8 @@ Date: 8/11/20
 
 After 17 Epochs, it gave an accuracy of 85.11 % on the Test data.
 
+TF Version: 2.3.0
+
 '''
 from tensorflow.keras.datasets import imdb
 import numpy as np
