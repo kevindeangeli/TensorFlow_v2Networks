@@ -14,6 +14,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.callbacks import EarlyStopping
+from sklearn.metrics import f1_score
 
 
 
@@ -89,14 +90,15 @@ if __name__ == "__main__":
     y_train = np.random.randint(0, num_classes, train_samples)
     y_test = np.random.randint(0, num_classes, test_samples)
     y_val = np.random.randint(0, num_classes, val_examples)
-    y_train = keras.utils.to_categorical(y_train, num_classes)
-    y_test = keras.utils.to_categorical(y_test, num_classes)
-    y_val = keras.utils.to_categorical(y_val, num_classes)
+    # y_train = keras.utils.to_categorical(y_train, num_classes)
+    # y_test = keras.utils.to_categorical(y_test, num_classes)
+    # y_val = keras.utils.to_categorical(y_val, num_classes)
 
     #Define and Compile Model
     model = TextCNNv2(vocab_size=vocab_size,embedding_size=embedding_size,num_classes=num_classes)
     optimizer = tf.keras.optimizers.Adam(lr, 0.9, 0.99)
-    model.compile(optimizer, loss="categorical_crossentropy", metrics=["accuracy"])
+    #model.compile(optimizer, loss="categorical_crossentropy", metrics=["accuracy"])
+    model.compile(optimizer, loss=tf.keras.losses.SparseCategoricalCrossentropy(), metrics=["accuracy"])
     earlyStopping = EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=5)
     model.fit(X_train, y_train, epochs=epochs, batch_size=64, validation_data=(X_val, y_val),callbacks=[earlyStopping])
     print(" ")
@@ -105,6 +107,11 @@ if __name__ == "__main__":
 
     print("Class Prediction for Dcoument 1: ")
     print(model.predictLabel(X_test[0:1]))
+
+    y_pred = model.predictLabel(X_test)
+    micro = f1_score(y_test, y_pred, average='micro')
+    macro = f1_score(y_test, y_pred, average='macro')
+    print("Micro: ", micro, "Macro: ", macro)
 
     ######### Save/Load Models ##########
     # #Save the model:
