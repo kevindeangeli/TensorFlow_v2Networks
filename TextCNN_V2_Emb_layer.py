@@ -13,8 +13,9 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-from tensorflow.keras.callbacks import EarlyStopping
+#from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.metrics import f1_score
+from tensorflow.keras import callbacks
 
 
 
@@ -67,7 +68,7 @@ if __name__ == "__main__":
     # params
     batch_size = 64
     lr = 0.0001
-    epochs = 1 #Patience used
+    epochs = 2 #Patience used
     train_samples = 1000
     test_samples = 1000
     val_examples = 50
@@ -99,8 +100,14 @@ if __name__ == "__main__":
     optimizer = tf.keras.optimizers.Adam(lr, 0.9, 0.99)
     #model.compile(optimizer, loss="categorical_crossentropy", metrics=["accuracy"])
     model.compile(optimizer, loss=tf.keras.losses.SparseCategoricalCrossentropy(), metrics=["accuracy"])
-    earlyStopping = EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=5)
-    model.fit(X_train, y_train, epochs=epochs, batch_size=64, validation_data=(X_val, y_val),callbacks=[earlyStopping])
+    #checkpoint = callbacks.ModelCheckpoint(args.save_dir + '/weights-{epoch:02d}.h5', monitor='val_accuracy'
+    #                                       ,save_best_only=False, save_weights_only=True, verbose=1)
+
+    path = "/Users/8id/Documents/TensorFlow/TensorFlow_v2Networks/cp.ckpt"
+    checkpoint = callbacks.ModelCheckpoint(path, monitor='val_accuracy'
+                                           ,save_best_only=False, verbose=1)
+    earlyStopping = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=5)
+    model.fit(X_train, y_train, epochs=epochs, batch_size=64, validation_data=(X_val, y_val),callbacks=[earlyStopping, checkpoint])
     print(" ")
     model.evaluate(X_test, y_test, verbose=1)
     model.summary()
@@ -114,14 +121,13 @@ if __name__ == "__main__":
     print("Micro: ", micro, "Macro: ", macro)
 
     ######### Save/Load Models ##########
-    # #Save the model:
-    # path = "my_mtCNN"
-    # model.save(path)
+    #Save the model:
+    path = "my_mtCNN"
+    model.save(path)
 
     # #Load the model:
     # path = "my_mtCNN"
-    # load_model = keras.models.load_model(path)
+    #load_model = keras.models.load_model(path)
     # load_model.evaluate(X_test, y_test, verbose=1)
     #
-    # load_model.fit(X_train, y_train, epochs=epochs, batch_size=64, validation_data=(X_val, y_val),
-    #           callbacks=[earlyStopping])
+    #load_model.fit(X_train, y_train, epochs=epochs, batch_size=64, validation_data=(X_val, y_val), callbacks=[earlyStopping,checkpoint])

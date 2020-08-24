@@ -19,8 +19,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
-
-
+from sklearn.metrics import f1_score
 
 
 
@@ -52,7 +51,8 @@ class TextCNNv2(keras.Model):
         super(TextCNNv2, self).__init__(name=name)
         self.dropout_keep = dropout_keep
         self.num_classes = num_classes
-        self.embL = layers.Embedding(vocab_size, embedding_size, embeddings_initializer='GlorotNormal')
+        #self.embL = layers.Embedding(vocab_size, embedding_size, embeddings_initializer='GlorotNormal')
+        self.embL = layers.Embedding(vocab_size, embedding_size,embeddings_initializer=tf.keras.initializers.RandomUniform(minval=-0.05, maxval=0.05, seed=None))
         self.embSize = embedding_size
         self.convolve = Convolutions(num_filters)
         self.classifyLayers = []
@@ -71,7 +71,7 @@ class TextCNNv2(keras.Model):
 
     def predictLabel(self, inputs):
         logits = self.predict(inputs)
-        Y_p = [np.argmax(i) for i in logits]
+        Y_p = [np.argmax(i,axis=1) for i in logits]
         return Y_p
 
 
@@ -80,8 +80,8 @@ if __name__ == "__main__":
     batch_size = 64
     lr = 0.0001
     epochs = 2 #Patience is implemented. Change this to a big number for early stopping.
-    train_samples = 1000
-    test_samples = 1000
+    train_samples = 100
+    test_samples = 100
     val_examples = 50
     vocab_size = 750
     max_words = 500
@@ -100,33 +100,24 @@ if __name__ == "__main__":
     y_train = np.random.randint(0, num_classes, train_samples)
     y_test = np.random.randint(0, num_classes, test_samples)
     y_val = np.random.randint(0, num_classes, val_examples)
-    y_train = keras.utils.to_categorical(y_train, num_classes)
-    y_test = keras.utils.to_categorical(y_test, num_classes)
-    y_val = keras.utils.to_categorical(y_val, num_classes)
 
     num_classes2 = 15 #Task 2 has these number of classes
     y_train2 = np.random.randint(0, num_classes2, train_samples)
     y_test2 = np.random.randint(0, num_classes2, test_samples)
     y_val2 = np.random.randint(0, num_classes2, val_examples)
 
-    y_train2 = keras.utils.to_categorical(y_train2, num_classes2)
-    y_test2 = keras.utils.to_categorical(y_test2, num_classes2)
-    y_val2 = keras.utils.to_categorical(y_val2, num_classes2)
-    '''
-    Note:
-    Using: model.compile(optimizer, loss=tf.keras.losses.SparseCategoricalCrossentropy(), metrics=["accuracy"])
-    Should not require y's to be hot-encoded. I haven't not tested it. 
-    '''
+
 
 
     num_classes = [num_classes,num_classes2] #Pass the number of classes per each task
     model = TextCNNv2(vocab_size=vocab_size,embedding_size=embedding_size,num_classes=num_classes)
     optimizer = tf.keras.optimizers.Adam()
-    model.compile(optimizer, loss="categorical_crossentropy", metrics=["accuracy"])
+    #model.compile(optimizer, loss="categorical_crossentropy", metrics=["accuracy"])
+    model.compile(optimizer, loss=tf.keras.losses.SparseCategoricalCrossentropy(), metrics=["accuracy"],run_eagerly=True)#False is more efficient
     earlyStopping = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=3)
     filepath = "checkPointsTest"
-    #mc = ModelCheckpoint(filepath, monitor='val_loss', verbose=0, save_best_only=False,
-    #                     save_weights_only=False, mode='auto',period=1) #Checkpoint after each iteration.
+    mc = ModelCheckpoint(filepath, monitor='val_loss', verbose=0, save_best_only=False,
+                        save_weights_only=False, mode='auto',period=1) #Checkpoint after each iteration.
     model.fit(X_train, [y_train,y_train2], epochs=epochs, batch_size=64, validation_data=(X_val, [y_val,y_val2]),
               callbacks=[earlyStopping])
     print("Evalaute: ----")
@@ -135,21 +126,32 @@ if __name__ == "__main__":
 
     #See predictions for Document 1:
     print("Prediction for document 1: ")
-    print(model.predictLabel(X_test[0:1]))
+    print(model.predictLabel(X_test[0:2]))
+
+    y_pred = model.predictLabel(X_test)
+    for taskIndex, predictions in enumerate(y_pred):
+        print("Task: ", taskIndex)
+        micro = f1_score(y_test, predictions, average='micro')
+        macro = f1_score(y_test, predictions, average='macro')
+        print("Micro: ", micro, "Macro: ", macro, "\n")
+
 
     ######### Save/Load Models ##########
 
-    # #Save the model:
-    # path = "my_mtCNN"
+    # # #Save the model:
+    # path = "my_mtCNN_testing"
     # model.save(path)
 
     # #Load the model:
-    # path = "my_mtCNN"
-    # load_model = keras.models.load_model(path)
+    #path = "my_mtCNN_testing"
+    #load_model = keras.models.load_model(path)
     # load_model.evaluate(X_test, [y_test, y_test2], verbose=1)
     #
     # load_model.fit(X_train, [y_train,y_train2], epochs=epochs, batch_size=64, validation_data=(X_val, [y_val,y_val2]),
     #           callbacks=[earlyStopping])
+
+
+
 
 
 
