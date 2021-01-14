@@ -20,7 +20,7 @@ from tensorflow.keras import layers
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
 from sklearn.metrics import f1_score
-
+import random
 
 
 class Convolutions(layers.Layer):
@@ -106,6 +106,18 @@ if __name__ == "__main__":
     y_test2 = np.random.randint(0, num_classes2, test_samples)
     y_val2 = np.random.randint(0, num_classes2, val_examples)
 
+    #Y_train_all = [y_train,y_train2]
+
+    #Shuffle the Data
+    xy = list(zip(X_train, y_train, y_train2))
+    random.Random(9).shuffle(xy)  #is the random seed to ensure we use the same (first) batch of random samples
+    X_train, y_train,y_train2 = zip(*xy)
+    X_train = np.array(X_train)
+    y_train = np.array(y_train)
+    y_train2 = np.array(y_train2)
+
+    #Collect all Ys
+    Y_train_all = [y_train,y_train2]
 
 
 
@@ -118,7 +130,7 @@ if __name__ == "__main__":
     filepath = "checkPointsTest"
     mc = ModelCheckpoint(filepath, monitor='val_loss', verbose=0, save_best_only=False,
                         save_weights_only=False, mode='auto',period=1) #Checkpoint after each iteration.
-    model.fit(X_train, [y_train,y_train2], epochs=epochs, batch_size=64, validation_data=(X_val, [y_val,y_val2]),
+    model.fit(X_train, Y_train_all, epochs=epochs, batch_size=64, validation_data=(X_val, [y_val,y_val2]),
               callbacks=[earlyStopping])
     print("Evalaute: ----")
     model.evaluate(X_test, [y_test,y_test2], verbose=1)
@@ -126,7 +138,7 @@ if __name__ == "__main__":
 
     #See predictions for Document 1:
     print("Prediction for document 1: ")
-    print(model.predictLabel(X_test[0:2]))
+    print(model.predictLabel(X_test[0:1]))
 
     y_pred = model.predictLabel(X_test)
     for taskIndex, predictions in enumerate(y_pred):
